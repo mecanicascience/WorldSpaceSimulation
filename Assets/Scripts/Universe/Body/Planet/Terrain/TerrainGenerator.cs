@@ -72,4 +72,11 @@ public class TerrainGenerator {
         this.maxHeight = -10000000000000;
         this.minHeight =  10000000000000;
     }
+
+    public double getMaxHeight() {
+        return this.maxHeight;
+    }
+    public double getMinHeight() {
+        return this.minHeight;
+    }
 }

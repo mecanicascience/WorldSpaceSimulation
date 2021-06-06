@@ -49,7 +49,7 @@ namespace QuadTree {
             this.propagateSubdivideInfo(this.depth);
 
             Planet p = this.handler.planet;
-            double d = Vector3d.Distance((Vector3d)this.centerQuadPos, p.lastPlayerPos); // distance player - chunk center
+            double dstPlayerQuadCenter = Vector3d.Distance((Vector3d) this.centerQuadPos, p.lastPlayerPos); // distance player - chunk center
 
             if (this.subdivided)
                 return;
@@ -58,11 +58,16 @@ namespace QuadTree {
 				   ( p.lodEnabled && this.depth <= p.lodDistances.Length - 1 && this.depth >= 0)
 				|| (!p.lodEnabled && this.depth <= p.nonLODLevelOfDetail - 1 && this.depth >= 0)
 			) {
-				if (p.lodEnabled && !(d <= p.lodDistances[this.depth]))
+				if (p.lodEnabled && !(dstPlayerQuadCenter <= p.lodDistances[this.depth]))
 					return;
-				
-				double maxDist = 1.4142 * p.planetSize/2 * 1.05; // sqrt(R^2 + R^2) * 1.01
-				if (p.cutNonVisibleChunks && d >= maxDist) { // > Max Radius
+
+                // Do not render non visible chunks
+                // c^2 = a^2 + b^2 - 2ab.cosT
+				double dstPlayerToPlanetCenter = (this.handler.planet.pos - p.lastPlayerPos).magnitude;
+				double cullingAngle = Math.Acos((p.planetSize * p.planetSize / 4 + dstPlayerQuadCenter * dstPlayerQuadCenter
+                    - dstPlayerToPlanetCenter * dstPlayerToPlanetCenter) / (p.planetSize * dstPlayerQuadCenter));
+
+				if (cullingAngle <= this.handler.planet.maxRenderingAngle) { // > Max Radius
 					this.shouldBeRendered = false;
 					return;
                 }
@@ -97,13 +102,8 @@ namespace QuadTree {
                     colliderChunks.AddRange(chunks.Item2);
 				}
 			}
-			else {
-                if (
-                    !this.handler.planet.cutNonVisibleChunks
-					|| this.handler.planet.cutNonVisibleChunks && this.shouldBeRendered
-					|| (this.handler.planet.cutNonVisibleChunks && !this.shouldBeRendered && this.depth <= 2)
-				) toBeRendered.Add(this);
-			}
+			else if (this.shouldBeRendered)
+                toBeRendered.Add(this);
 
             if (this.depth == this.handler.maxCurrentDepth || this.depth == 0)
                 colliderChunks.Add(this);
@@ -115,13 +115,14 @@ namespace QuadTree {
 			int density = this.handler.planet.chunkDensity + 1;
 
             Vector3[] vertices = new Vector3[density * density];
-            Vector3[] normals = new Vector3[density * density];
             int[] triangles = new int[6 * (density - 1) * (density - 1)];
-            Color[] colors = new Color[density * density];
+            Vector3[] normals = new Vector3[vertices.Length];
+            Color[] colors = new Color[vertices.Length];
 
 			float scale = this.handler.planet.planetSize / 2f;
 			Vector3d offset = new Vector3d(scale / 2f, -scale / 2f, scale / 2f);
 
+			// Calculate Mesh and colors
             int indexTr = 0;
             for (int j = 0; j < density; j++) {
                 for (int i = 0; i < density; i++) {
@@ -136,9 +137,8 @@ namespace QuadTree {
                     z = this.handler.planet.getAltitudeAt(sphereUnitPosition);
 
                     vertices[index] = (Vector3) (sphereUnitPosition * (scale + z));
-                    normals[index] = vertices[index].normalized;
-                    colors[index] = this.handler.planet.getColorAtAltitude(z); // tmp
-					// colors[index] = this.handler.planet.getColorAt(sphereUnitPosition);
+					normals[index] = vertices[index].normalized;
+                    colors[index] = this.handler.planet.getColorAtAltitude(z);
 
                     if (i != density - 1 && j != density - 1) {
                         triangles[indexTr + 0] = index + density + triangleOffset;
@@ -154,6 +154,29 @@ namespace QuadTree {
                     }
 				}
 			}
+
+            // Calculate normals
+            /* 
+			int triangleCount = triangles.Length / 3;
+			int vertexIndexA;
+			int vertexIndexB;
+			int vertexIndexC;
+            Vector3 triangleNormal;
+
+			for (int i = 0; i < triangleCount; i++) {
+				int normalTriangleIndex = i * 3;
+				vertexIndexA = triangles[normalTriangleIndex];
+                vertexIndexB = triangles[normalTriangleIndex + 1];
+                vertexIndexC = triangles[normalTriangleIndex + 2];
+
+                // First triangle normal
+			} */
+
+			// Normalize normals
+			/* for (int i = 0; i < normals.Length; i++) {
+				normals[i].Normalize();
+			} */
+
 
 			return (vertices, normals, triangles, colors);
 		}

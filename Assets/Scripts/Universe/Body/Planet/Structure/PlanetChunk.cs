@@ -10,6 +10,8 @@ public class PlanetChunk {
 
 	
 	private Vector3 localUp;
+    private Material material;
+
 
 	// Chunk datas
     public List<Vector3> vertices = new List<Vector3>();
@@ -23,11 +25,12 @@ public class PlanetChunk {
     public List<Vector3> normalsCollider = new List<Vector3>();
 
 
-    public PlanetChunk(Planet planet, Mesh mesh, Mesh meshCollider, Vector3 localUp) {
+    public PlanetChunk(Planet planet, Mesh mesh, Mesh meshCollider, Vector3 localUp, Material material) {
 		this.localUp = localUp;
         this.planet = planet;
         this.mesh = mesh;
 		this.meshCollider = meshCollider;
+        this.material = material;
         this.maxCurrentDepth = 0;
 	}
 
@@ -97,8 +100,4 @@ public class PlanetChunk {
             
 		mesh.RecalculateBounds();
 	}
-
-    public void updateTerrainDatas(bool useThreads) {
-        
-    }
 }

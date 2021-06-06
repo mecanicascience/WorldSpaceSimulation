@@ -22,7 +22,7 @@ public class Planet : MonoBehaviour {
     [Header("Level Of Detail")]
     public bool lodEnabled = true;
     public bool useThreads = true;
-    public bool cutNonVisibleChunks = false;
+    public float maxRenderingAngle = 0.47f;
 
     public int[] lodDistances = new int[] {
         Int32.MaxValue,
@@ -82,6 +82,9 @@ public class Planet : MonoBehaviour {
     [HideInInspector]
     public GameObject[] planetChunksGO;
 
+    [HideInInspector]
+    public Material[] planetMaterials;
+
 
 
     /** Planet mesh update thread */
@@ -97,7 +100,7 @@ public class Planet : MonoBehaviour {
         this.terrainGenerator = new TerrainGenerator(noiseSettings, this);
         this.pos = new Vector3d(this.transform.position);
         this.vel = Vector3d.zero;
-        this.shading = new PlanetShading();
+        this.shading = new PlanetShading(this);
 
         // Initialization
         if (planetChunks == null || planetChunks.Length == 0)
@@ -127,6 +130,9 @@ public class Planet : MonoBehaviour {
             }
         }
         this.colliderDeltaTime += Time.deltaTime;
+
+        // Update material vals
+        this.updateMaterialDatas();
     }
 
 
@@ -143,6 +149,8 @@ public class Planet : MonoBehaviour {
             planetMeshFilters = new MeshFilter[6];
         if (planetMeshCollider == null || planetMeshCollider.Length == 0)
             planetMeshCollider = new MeshCollider[6];
+        if (planetMaterials == null || planetMaterials.Length == 0)
+            planetMaterials = new Material[6]; 
         planetChunks = new PlanetChunk[6];
 
         // Get planet mesh filters from existing planet
@@ -160,7 +168,10 @@ public class Planet : MonoBehaviour {
                 meshGO.tag = "PlanetTag";
                 meshGO.layer = LayerMask.NameToLayer("Planet");
                 planetChunksGO[i] = meshGO;
-                meshGO.AddComponent<MeshRenderer>().sharedMaterial = new Material(surfaceMaterial);
+
+                Material mat = new Material(this.surfaceMaterial);
+                planetMaterials[i] = mat;
+                meshGO.AddComponent<MeshRenderer>().sharedMaterial = mat;
 
                 // MeshFilter
                 Mesh mesh = new Mesh();
@@ -179,14 +190,29 @@ public class Planet : MonoBehaviour {
             else {
                 if (planetMeshFilters[i].GetComponent<MeshRenderer>() == null)
                     planetMeshFilters[i].gameObject.AddComponent<MeshRenderer>();
-                planetMeshFilters[i].GetComponent<MeshRenderer>().sharedMaterial = new Material(surfaceMaterial);
+
+                Material mat = new Material(this.surfaceMaterial);
+                planetMaterials[i] = mat;
+                planetMeshFilters[i].GetComponent<MeshRenderer>().sharedMaterial = mat;
                 planetMeshFilters[i].gameObject.layer = LayerMask.NameToLayer("Planet");
             }
 
             // Construct Class Chunks
-            planetChunks[i] = new PlanetChunk(this, planetMeshFilters[i].sharedMesh, planetMeshCollider[i].sharedMesh, localUp[i]);
+            planetChunks[i] = new PlanetChunk(
+                this, planetMeshFilters[i].sharedMesh,
+                planetMeshCollider[i].sharedMesh, localUp[i],
+                planetChunksGO[i].GetComponent<MeshRenderer>().sharedMaterial
+            );
         }
     }
+
+    public void updateMaterialDatas() {
+        for (int i = 0; i < this.planetChunks.Length; i++) {
+            this.shading.updateTerrainDatas(planetMaterials[i], terrainGenerator);
+        }
+    }
+
+
 
     public double getAltitudeAt(Vector3d spherePos) {
         return this.terrainGenerator.getAltitudeAt(spherePos);
@@ -194,12 +220,6 @@ public class Planet : MonoBehaviour {
 
     public Color getColorAtAltitude(double altitude) {
         return this.terrainGenerator.getColorAtAltitude(altitude);
-    }
-
-    public Color getColorAt(Vector3d sphereUnitPosition) {
-        double latitude  = Math.PI / 2 - Math.Acos(sphereUnitPosition.z / sphereUnitPosition.magnitude);
-        double longitude = Math.Atan2(sphereUnitPosition.y, sphereUnitPosition.x);
-        return this.terrainGenerator.getColorAtLatLong(latitude, longitude);
     }
 
 
@@ -216,13 +236,11 @@ public class Planet : MonoBehaviour {
             if (useThreads) {
                 Thread t = new Thread(() => {
                     ch.generateChunk(useThreads);
-                    ch.updateTerrainDatas(useThreads);
                 });
                 t.Start();
             }
             else {
                 ch.generateChunk(useThreads);
-                ch.updateTerrainDatas(useThreads);
             }
         }
     }

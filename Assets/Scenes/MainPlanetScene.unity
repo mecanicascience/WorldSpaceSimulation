@@ -202,7 +202,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   sprintKeyCode: 304
-  useCustomPhysics: 1
+  useCustomPhysics: 0
   flySpeed: 800
   flyRunSpeed: 5000
   walkSpeed: 8
@@ -717,6 +717,10 @@ PrefabInstance:
       value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 8614436962961046307, guid: 1e54ba2b10635974c99144191e45512a, type: 3}
+      propertyPath: maxRenderingAngle
+      value: 0.47
+      objectReference: {fileID: 0}
+    - target: {fileID: 8614436962961046307, guid: 1e54ba2b10635974c99144191e45512a, type: 3}
       propertyPath: terrainGradient.ctime1
       value: 12529
       objectReference: {fileID: 0}
@@ -746,7 +750,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8614436962961046307, guid: 1e54ba2b10635974c99144191e45512a, type: 3}
       propertyPath: terrainGradient.m_Mode
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 8614436962961046311, guid: 1e54ba2b10635974c99144191e45512a, type: 3}
       propertyPath: m_RootOrder
