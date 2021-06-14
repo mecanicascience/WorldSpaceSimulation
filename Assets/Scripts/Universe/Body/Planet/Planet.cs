@@ -97,6 +97,10 @@ public class Planet : MonoBehaviour {
 
 
     private void Start() {
+        // Initialize mesh presets
+        QuadTree.Presets.instanciate();
+
+        // Initialize planet data
         this.terrainGenerator = new TerrainGenerator(noiseSettings, this);
         this.pos = new Vector3d(this.transform.position);
         this.vel = Vector3d.zero;

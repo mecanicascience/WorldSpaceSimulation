@@ -24,6 +24,8 @@ public class PlanetChunk {
     public List<int> trianglesCollider = new List<int>();
     public List<Vector3> normalsCollider = new List<Vector3>();
 
+    public QuadTree.Chunk mainChunk;
+
 
     public PlanetChunk(Planet planet, Mesh mesh, Mesh meshCollider, Vector3 localUp, Material material) {
 		this.localUp = localUp;
@@ -32,6 +34,7 @@ public class PlanetChunk {
 		this.meshCollider = meshCollider;
         this.material = material;
         this.maxCurrentDepth = 0;
+        this.mainChunk = new QuadTree.Chunk(this, null, new QuadTree.BoundingBox(0, 0, 1), 0, localUp, 0b0);
 	}
 
 	public void generateChunk(bool useThreads = false) {
@@ -45,12 +48,12 @@ public class PlanetChunk {
         this.trianglesCollider.Clear();
 
         // Generate Chunks
-        QuadTree.Chunk mainChunk = new QuadTree.Chunk(this, null, new QuadTree.BoundingBox(0, 0, this.planet.planetSize / 2f), 0, localUp);
-        mainChunk.subdivide();
-        this.maxCurrentDepth = mainChunk.maxCurrentDepth;
+        this.mainChunk = new QuadTree.Chunk(this, null, new QuadTree.BoundingBox(0, 0, this.planet.planetSize / 2f), 0, localUp, 0b1);
+        this.mainChunk.subdivide();
+        this.maxCurrentDepth = this.mainChunk.maxCurrentDepth;
 
 		// Update Mesh based on chunks subdivision
-		(QuadTree.Chunk[], QuadTree.Chunk[]) children = mainChunk.getVisibleChildren();
+		(QuadTree.Chunk[], QuadTree.Chunk[]) children = this.mainChunk.getVisibleChildren();
 
         // Mesh
         int triangleOffset = 0;

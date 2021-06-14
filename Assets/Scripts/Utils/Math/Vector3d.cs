@@ -51,7 +51,13 @@ namespace UnityEngine {
 
         public static Vector3d zero {
             get {
-                return new Vector3d(0.0, 0.0, 0.0);
+                return new Vector3d(0d, 0d, 0d);
+            }
+        }
+
+        public static Vector3d one {
+            get {
+                return new Vector3d(1d, 1d, 1d);
             }
         }
 
