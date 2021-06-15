@@ -161,6 +161,8 @@ namespace QuadTree {
             // Get vertices and triangles
             Vector3[] vertices = new Vector3[Presets.vertices[neighborsHash].Length];
             int[] triangles = new int[Presets.triangles[neighborsHash].Length];
+            Vector3[] edgeVertices = new Vector3[Presets.edgeVertices[neighborsHash].Length];
+            int[] edgeTriangles = new int[Presets.edgeTriangles[neighborsHash].Length];
 
             // Update vertices and calculate normals and colors
             Vector3[] normals = new Vector3[vertices.Length];
@@ -178,12 +180,25 @@ namespace QuadTree {
                 double z = this.handler.planet.getAltitudeAt(sphereUnitPosition);
 
                 vertices[i] = (Vector3) (sphereUnitPosition * (scale + z));
-                normals[i] = vertices[i].normalized;
                 colors[i] = this.handler.planet.getColorAtAltitude(z);
             }
 
+            // Do the same for edge vertices
+            for (int i = 0; i < edgeVertices.Length; i++) {
+                double xPos = Presets.edgeVertices[neighborsHash][i].x * this.bounds.dim / 100d + this.bounds.pos.x;
+                double yPos = Presets.edgeVertices[neighborsHash][i].y * this.bounds.dim / 100d + this.bounds.pos.y;
+                double zPos = 0;
+
+                Vector3d sphereUnitPosition = QuaternionD.Euler(90 * localUp) * (new Vector3d(xPos, zPos, yPos) - offset).normalized;
+                double z = this.handler.planet.getAltitudeAt(sphereUnitPosition);
+
+                edgeVertices[i] = (Vector3)(sphereUnitPosition * (scale + z));
+            }
+
+
             // Set up triangles
             triangles = Presets.triangles[neighborsHash];
+            edgeTriangles = Presets.edgeTriangles[neighborsHash];
             int[] offsetedTriangles = new int[triangles.Length];
             for (int i = 0; i < triangles.Length; i++) {
                 offsetedTriangles[i] = triangles[i] + triangleOffset;
@@ -194,6 +209,7 @@ namespace QuadTree {
             int vertexIndexB;
             int vertexIndexC;
 
+            // Vertex in triangles
             for (int i = 0; i < triangles.Length / 3; i++) {
                 int normalTriangleIndex = i * 3;
                 vertexIndexA = triangles[normalTriangleIndex];
@@ -206,9 +222,25 @@ namespace QuadTree {
                 normals[vertexIndexC] += triangleNormal;
             }
 
-            for (int i = 0; i < normals.Length; i++) {
-                normals[i].Normalize();
+            // Vertex in borders
+            for(int i = 0; i < edgeTriangles.Length / 3; i++) {
+                int normalTriangleIndex = i * 3;
+                vertexIndexA = edgeTriangles[normalTriangleIndex + 0];
+                vertexIndexB = edgeTriangles[normalTriangleIndex + 1];
+                vertexIndexC = edgeTriangles[normalTriangleIndex + 2];
+
+                Vector3 triangleNormal = this.getSurfaceNormalFromIndicesEdges(edgeVertices, vertices, vertexIndexA, vertexIndexB, vertexIndexC);
+                if (vertexIndexA <= 0)
+                    normals[-vertexIndexA] += triangleNormal;
+                if (vertexIndexB <= 0)
+                    normals[-vertexIndexB] += triangleNormal;
+                if (vertexIndexC <= 0)
+                    normals[-vertexIndexC] += triangleNormal;
             }
+
+            // Normalize
+            for (int i = 0; i < normals.Length; i++)
+                normals[i].Normalize();
 
 
             return (vertices, normals, offsetedTriangles, colors);
@@ -282,6 +314,32 @@ namespace QuadTree {
             Vector3 pointA = vertices[indexA];
             Vector3 pointB = vertices[indexB];
             Vector3 pointC = vertices[indexC];
+
+            // Get an aproximation of the vertex normal using two other vertices that share the same triangle
+            Vector3 sideAB = pointB - pointA;
+            Vector3 sideAC = pointC - pointA;
+            return Vector3.Cross(sideAB, sideAC).normalized;
+        }
+
+        private Vector3 getSurfaceNormalFromIndicesEdges(Vector3[] edgeVertices, Vector3[] vertices, int indexA, int indexB, int indexC) {
+            Vector3 pointA = Vector3.zero;
+            Vector3 pointB = Vector3.zero;
+            Vector3 pointC = Vector3.zero;
+
+            if (indexA > 0)
+                pointA = (Vector3) edgeVertices[indexA - 1];
+            else
+                pointA = vertices[-indexA];
+
+            if (indexB > 0)
+                pointB = (Vector3) edgeVertices[indexB - 1];
+            else
+                pointB = vertices[-indexB];
+
+            if (indexC > 0)
+                pointC = (Vector3) edgeVertices[indexC - 1];
+            else
+                pointC = vertices[-indexC];
 
             // Get an aproximation of the vertex normal using two other vertices that share the same triangle
             Vector3 sideAB = pointB - pointA;
