@@ -30,8 +30,8 @@ MonoBehaviour:
   m_Name: PlanetPostProcessingForward
   m_EditorClassIdentifier: 
   m_RendererFeatures:
-  - {fileID: -521138385928563925}
-  m_RendererFeatureMap: 2b53e82b668bc4f8
+  - {fileID: 8904141436745165443}
+  m_RendererFeatureMap: 832a08e775dd917b
   postProcessData: {fileID: 11400000, guid: 41439944d30ece34e96484bdb6645b55, type: 2}
   xrSystemData: {fileID: 11400000, guid: 60e1133243b97e347b653163a8c01b64, type: 2}
   shaders:
@@ -60,3 +60,20 @@ MonoBehaviour:
   m_ShadowTransparentReceive: 1
   m_RenderingMode: 0
   m_AccurateGbufferNormals: 0
+--- !u!114 &8904141436745165443
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 61fdbc6a3fc4e0549967ea729a87085a, type: 3}
+  m_Name: Atmosphere
+  m_EditorClassIdentifier: 
+  m_Active: 1
+  settings:
+    isEnabled: 1
+    renderingPass: 1000
+    featureMaterial: {fileID: 2100000, guid: 62db405e995bbb14281847e5055f1445, type: 2}

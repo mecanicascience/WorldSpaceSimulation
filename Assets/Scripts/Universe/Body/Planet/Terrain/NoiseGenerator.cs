@@ -12,9 +12,9 @@ public class NoiseGenerator {
         }
     }
 
-    public void initialize() {
+    public void initialize(int seed) {
         for (int i = 0; i < layer.Length; i++) {
-            this.layer[i].initialize();
+            this.layer[i].initialize(seed);
         }
     }
 

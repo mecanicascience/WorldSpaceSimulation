@@ -155,7 +155,7 @@ namespace QuadTree {
 
 
 
-		public (Vector3[], Vector3[], int[], Color[]) calculateVerticesAndTriangles(int triangleOffset) {
+		public (Vector3[], Vector3[], int[], Color[], Vector2[]) calculateVerticesAndTriangles(int triangleOffset) {
             uint neighborsHash = this.calculateNeighborsSequence();
 
             // Get vertices and triangles
@@ -163,6 +163,9 @@ namespace QuadTree {
             int[] triangles = new int[Presets.triangles[neighborsHash].Length];
             Vector3[] edgeVertices = new Vector3[Presets.edgeVertices[neighborsHash].Length];
             int[] edgeTriangles = new int[Presets.edgeTriangles[neighborsHash].Length];
+
+            // Create uvs
+            Vector2[] uvs = new Vector2[vertices.Length];
 
             // Update vertices and calculate normals and colors
             Vector3[] normals = new Vector3[vertices.Length];
@@ -181,6 +184,9 @@ namespace QuadTree {
 
                 vertices[i] = (Vector3) (sphereUnitPosition * (scale + z));
                 colors[i] = this.handler.planet.getColorAtAltitude(z);
+
+                // Compute UVS
+                uvs[i].y = (float) z;
             }
 
             // Do the same for edge vertices
@@ -243,7 +249,7 @@ namespace QuadTree {
                 normals[i].Normalize();
 
 
-            return (vertices, normals, offsetedTriangles, colors);
+            return (vertices, normals, offsetedTriangles, colors, uvs);
 		}
 
 

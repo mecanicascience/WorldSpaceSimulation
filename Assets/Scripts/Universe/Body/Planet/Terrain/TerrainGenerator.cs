@@ -15,8 +15,8 @@ public class TerrainGenerator {
         this.planet = planet;
     }
 
-    public void initialize() {
-        this.noiseGenerator.initialize();
+    public void initialize(int seed) {
+        this.noiseGenerator.initialize(seed);
         this.resetExtremum();
     }
 
@@ -50,8 +50,6 @@ public class TerrainGenerator {
         return planet.terrainGradient.Evaluate((float) z);
     }
 
-
-    private double[] latitudeZones = new double[]{0, 0};
     
     public Color getColorAtLatLong(double latitude, double longitude) {
         if (latitude < 0) {

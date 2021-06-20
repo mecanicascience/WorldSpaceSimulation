@@ -17,9 +17,12 @@ public class NoiseLayer {
         this.lastStrength = settings.strength;
     }
 
-    public void initialize() {
-        this.noise = new Noise(27092001);
+    public void initialize(int seed) {
+        this.noise = new Noise(seed);
         this.octavesOffset = new Vector3[settings.octaves];
+
+        // Set Seed to PRNG
+        Random.InitState(seed);
 
         // Initialize octaves offset
         int range = 100000;

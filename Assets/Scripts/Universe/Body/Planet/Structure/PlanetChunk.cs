@@ -18,6 +18,7 @@ public class PlanetChunk {
     public List<int> triangles = new List<int>();
     public List<Vector3> normals = new List<Vector3>();
     public List<Color> colors = new List<Color>();
+    public List<Vector2> uvs = new List<Vector2>();
 
     // Collider datas
     public List<Vector3> verticesCollider = new List<Vector3>();
@@ -43,6 +44,7 @@ public class PlanetChunk {
         this.normals  .Clear();
 		this.triangles.Clear();
         this.colors   .Clear();
+        this.uvs      .Clear();
         this.verticesCollider.Clear();
         this.normalsCollider.Clear();
         this.trianglesCollider.Clear();
@@ -58,11 +60,12 @@ public class PlanetChunk {
         // Mesh
         int triangleOffset = 0;
         for (int i = 0; i < children.Item1.Length; i++) {
-			(Vector3[], Vector3[], int[], Color[]) verticesAndTriangles = children.Item1[i].calculateVerticesAndTriangles(triangleOffset);
+			(Vector3[], Vector3[], int[], Color[], Vector2[]) verticesAndTriangles = children.Item1[i].calculateVerticesAndTriangles(triangleOffset);
 			vertices .AddRange(verticesAndTriangles.Item1);
             normals  .AddRange(verticesAndTriangles.Item2);
 			triangles.AddRange(verticesAndTriangles.Item3);
             colors   .AddRange(verticesAndTriangles.Item4);
+            uvs      .AddRange(verticesAndTriangles.Item5);
             triangleOffset += verticesAndTriangles.Item1.Length;
 		}
 
@@ -70,7 +73,7 @@ public class PlanetChunk {
         // Collider
         triangleOffset = 0;
         for (int i = 0; i < children.Item2.Length; i++) {
-            (Vector3[], Vector3[], int[], Color[]) verticesAndTriangles = children.Item2[i].calculateVerticesAndTriangles(triangleOffset);
+            (Vector3[], Vector3[], int[], Color[], Vector2[]) verticesAndTriangles = children.Item2[i].calculateVerticesAndTriangles(triangleOffset);
             verticesCollider .AddRange(verticesAndTriangles.Item1);
             normalsCollider  .AddRange(verticesAndTriangles.Item2);
             trianglesCollider.AddRange(verticesAndTriangles.Item3);
@@ -80,19 +83,19 @@ public class PlanetChunk {
 
 		if (useThreads) {
 			this.planet.planetQueue.Enqueue(() => {
-                updateMesh(mesh, vertices.ToArray(), normals.ToArray(), triangles.ToArray(), colors.ToArray());
-                updateMesh(meshCollider, verticesCollider.ToArray(), normalsCollider.ToArray(), trianglesCollider.ToArray(), null);
+                updateMesh(mesh, vertices.ToArray(), normals.ToArray(), triangles.ToArray(), colors.ToArray(), uvs.ToArray());
+                updateMesh(meshCollider, verticesCollider.ToArray(), normalsCollider.ToArray(), trianglesCollider.ToArray(), null, null);
             });
 		}
 		else {
             lock (this.planet.planetQueue.getQueueLock()) {
-                updateMesh(mesh, vertices.ToArray(), normals.ToArray(), triangles.ToArray(), colors.ToArray());
-                updateMesh(meshCollider, verticesCollider.ToArray(), normalsCollider.ToArray(), trianglesCollider.ToArray(), null);
+                updateMesh(mesh, vertices.ToArray(), normals.ToArray(), triangles.ToArray(), colors.ToArray(), uvs.ToArray());
+                updateMesh(meshCollider, verticesCollider.ToArray(), normalsCollider.ToArray(), trianglesCollider.ToArray(), null, null);
             }
 		}
 	}
 
-	public void updateMesh(Mesh mesh, Vector3[] vertices, Vector3[] normals, int[] triangles, Color[] colors) {
+	public void updateMesh(Mesh mesh, Vector3[] vertices, Vector3[] normals, int[] triangles, Color[] colors, Vector2[] uvs) {
         mesh.Clear();
         mesh.vertices  = vertices;
         mesh.normals   = normals;
@@ -100,6 +103,9 @@ public class PlanetChunk {
 
         if (colors != null)
             mesh.colors = colors;
+
+        if (uvs != null)
+            mesh.uv = uvs;
             
 		mesh.RecalculateBounds();
 	}

@@ -6,11 +6,9 @@ using System;
 
 
 
-public class Planet : MonoBehaviour {
+public class Planet : Body {
     [Header("Planet Configuration")]
-    public float planetSize = 60000;
     public int chunkDensity = 5;
-    public double mass = 88300;
     public float terrainHeight = 1000;
 
     [Range(0, 0.5f)]
@@ -44,12 +42,8 @@ public class Planet : MonoBehaviour {
     };
     public int nonLODLevelOfDetail = 5;
 
-    [Header("Advanced")]
-    public GameObject player = null;
-    public bool debug = false;
     public double meshDistanceColliderThreshold = 50;
     public float updateChunkRate = 0.5f;
-    public Material surfaceMaterial;
 
 
     /** Local pointing up vectors for spheres */
@@ -59,16 +53,9 @@ public class Planet : MonoBehaviour {
         Vector3.forward, Vector3.back
     };
 
-    public Vector3d pos;
-    public Vector3d vel;
-
-
 
     [HideInInspector]
-    public Vector3d lastPos;
-    [HideInInspector]
-    public Vector3d lastPlayerPos;
-
+    public float planetSize = 60000;
 
     [SerializeField, HideInInspector]
     public PlanetChunk[] planetChunks;
@@ -96,14 +83,23 @@ public class Planet : MonoBehaviour {
 
 
 
-    private void Start() {
+    new protected void Start() {
+        // Initialize parent
+        base.Start();
+
+        // Set tags and layers (very important)
+        this.gameObject.tag = "PlanetTag";
+        this.gameObject.layer = LayerMask.NameToLayer("Planet");
+
+        // Initialize planet size
+        this.planetSize = this.transform.localScale.x;
+        this.transform.localScale.Set(this.planetSize, this.planetSize, this.planetSize);
+
         // Initialize mesh presets
         QuadTree.Presets.instanciate();
 
         // Initialize planet data
         this.terrainGenerator = new TerrainGenerator(noiseSettings, this);
-        this.pos = new Vector3d(this.transform.position);
-        this.vel = Vector3d.zero;
         this.shading = new PlanetShading(this);
 
         // Initialization
@@ -117,13 +113,15 @@ public class Planet : MonoBehaviour {
         this.colliderDeltaTime = 0;
     }
 
-    private void Update() {
+    new private void Update() {
+        base.Update();
+
+        // Updates planet size
+        this.planetSize = this.transform.localScale.x;
+        this.transform.localScale.Set(this.planetSize, this.planetSize, this.planetSize);
+
         // Execute actions in Queue
         this.planetQueue.ExecuteActionInQueue();
-
-        // Stores player datas
-        this.lastPos = this.pos;
-        this.lastPlayerPos = this.player.GetComponent<PlayerControler>().pos;
 
         // Update collider every second 
         if (this.colliderDeltaTime > 1) {
@@ -142,7 +140,8 @@ public class Planet : MonoBehaviour {
 
     public void initialize() {
         // Generate terrain
-        this.terrainGenerator.initialize();
+        this.generateUUID();
+        this.terrainGenerator.initialize(this.getUUID());
 
         // Clear Planet Current Mesh
         this.gameObject.GetComponent<MeshRenderer>().enabled = false;
