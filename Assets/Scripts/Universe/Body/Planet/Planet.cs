@@ -2,9 +2,6 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using System.Threading;
-using System;
-
-
 
 public class Planet : Body {
     [Header("Planet Configuration")]
@@ -23,9 +20,9 @@ public class Planet : Body {
     public float maxRenderingAngle = 0.47f;
 
     public int[] lodDistances = new int[] {
-        Int32.MaxValue,
-        Int32.MaxValue,
-        Int32.MaxValue,
+        int.MaxValue,
+        int.MaxValue,
+        int.MaxValue,
         45000,
         20000,
         10000,
@@ -53,17 +50,13 @@ public class Planet : Body {
         Vector3.forward, Vector3.back
     };
 
-
     [HideInInspector]
-    public float planetSize = 60000;
-
-    [SerializeField, HideInInspector]
     public PlanetChunk[] planetChunks;
 
-    [SerializeField, HideInInspector]
+    [HideInInspector]
     public MeshFilter[] planetMeshFilters;
 
-    [SerializeField, HideInInspector]
+    [HideInInspector]
     public MeshCollider[] planetMeshCollider;
 
     [HideInInspector]
@@ -91,10 +84,6 @@ public class Planet : Body {
         this.gameObject.tag = "PlanetTag";
         this.gameObject.layer = LayerMask.NameToLayer("Planet");
 
-        // Initialize planet size
-        this.planetSize = this.transform.localScale.x;
-        this.transform.localScale.Set(this.planetSize, this.planetSize, this.planetSize);
-
         // Initialize mesh presets
         QuadTree.Presets.instanciate();
 
@@ -115,10 +104,6 @@ public class Planet : Body {
 
     new private void Update() {
         base.Update();
-
-        // Updates planet size
-        this.planetSize = this.transform.localScale.x;
-        this.transform.localScale.Set(this.planetSize, this.planetSize, this.planetSize);
 
         // Execute actions in Queue
         this.planetQueue.ExecuteActionInQueue();
@@ -215,6 +200,11 @@ public class Planet : Body {
         }
     }
 
+    public Vector3d getLaunchPadPosition() {
+        Vector3d sphereUnitPosition = (new Vector3d(Random.Range(0f, 10f), Random.Range(0f, 10f), Random.Range(0f, 10f))).normalized;
+        return sphereUnitPosition * (this.size / 2f + this.getAltitudeAt(sphereUnitPosition) + 2f*10f);
+    }
+
 
 
     public double getAltitudeAt(Vector3d spherePos) {
@@ -230,10 +220,10 @@ public class Planet : Body {
 
     private void generatePlanetMesh(bool useThreads = false) {
         if (
-               this.planetSize != this.transform.localScale.x
-            || this.planetSize != this.transform.localScale.y
-            || this.planetSize != this.transform.localScale.z
-        ) this.transform.localScale = new Vector3(this.planetSize, this.planetSize, this.planetSize);
+               this.size != this.transform.localScale.x
+            || this.size != this.transform.localScale.y
+            || this.size != this.transform.localScale.z
+        ) this.transform.localScale = new Vector3(this.size, this.size, this.size);
 
         foreach (PlanetChunk ch in planetChunks) {
             if (useThreads) {

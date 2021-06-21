@@ -12,6 +12,6 @@ public class PlanetShading {
     public void updateTerrainDatas(Material mat, TerrainGenerator generator) {
         mat.SetFloat("_MaxHeight", (float)generator.getMaxHeight());
         mat.SetFloat("_MinHeight", (float)generator.getMinHeight());
-        mat.SetFloat("_BodyRadius", this.planet.planetSize);
+        mat.SetFloat("_BodyRadius", this.planet.size);
     }
 }

@@ -75,11 +75,11 @@ namespace QuadTree {
 
 		private Vector3d calculateCenterQuadPos() {
 			Planet p = this.handler.planet;
-            double scale = p.planetSize / 2f;
+            double scale = p.size / 2f;
             Vector3d offset = new Vector3d(scale / 2f, -scale / 2f, scale / 2f);
 			Vector3d pos = QuaternionD.Euler(90 * localUp)
 				* (new Vector3d(this.bounds.pos.x + this.bounds.dim / 2, 0, this.bounds.pos.y + this.bounds.dim / 1) - ((Vector3d) offset)).normalized
-				* p.planetSize / 2f + p.lastPos;
+				* p.size / 2f + p.lastPos;
 			return pos;
 		}
 
@@ -102,8 +102,8 @@ namespace QuadTree {
                 // Do not render non visible chunks
                 // c^2 = a^2 + b^2 - 2ab.cosT
 				double dstPlayerToPlanetCenter = (this.handler.planet.pos - p.lastPlayerPos).magnitude;
-				double cullingAngle = Math.Acos((p.planetSize * p.planetSize / 4 + dstPlayerQuadCenter * dstPlayerQuadCenter
-                    - dstPlayerToPlanetCenter * dstPlayerToPlanetCenter) / (p.planetSize * dstPlayerQuadCenter));
+				double cullingAngle = Math.Acos((p.size * p.size / 4 + dstPlayerQuadCenter * dstPlayerQuadCenter
+                    - dstPlayerToPlanetCenter * dstPlayerToPlanetCenter) / (p.size * dstPlayerQuadCenter));
 
 				if (cullingAngle <= this.handler.planet.maxRenderingAngle) { // > Max Radius
 					this.shouldBeRendered = false;
@@ -171,7 +171,7 @@ namespace QuadTree {
             Vector3[] normals = new Vector3[vertices.Length];
             Color[] colors = new Color[vertices.Length];
 
-            float scale = this.handler.planet.planetSize / 2f;
+            float scale = this.handler.planet.size / 2f;
             Vector3d offset = new Vector3d(scale / 2f, -scale / 2f, scale / 2f);
 
             for (int i = 0; i < vertices.Length; i++) {

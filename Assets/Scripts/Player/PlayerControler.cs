@@ -1,11 +1,13 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class PlayerControler : MonoBehaviour {
 	[Header("Movement controls")]
 	public KeyCode sprintKeyCode = KeyCode.LeftShift;
-	public bool useCustomPhysics = false; // False if player move without forces
+	public bool useCustomPhysics = true; // False if player move without forces
+	public bool spawnOnLaunchPad = true;
 	public float flySpeed = 800f;
 	public float flyRunSpeed = 5000f;
 
@@ -23,16 +25,25 @@ public class PlayerControler : MonoBehaviour {
 	public double mass = 80f;
 	public Transform feetPosition;
 	public Camera mainCamera;
-	public Planet planet;
 	public GameObject collisionPointer;
+
+	[HideInInspector]
+	public Body nearestBody;
 	
 	public Vector3d pos;
     public Vector3d vel;
     public Vector3d acc;
+	private float lastPlayerPlanetDistance;
 
     private Rigidbody rb;
 	private Vector3d smoothVRef;
     private Vector3d localGravity;
+	private Universe universe;
+
+	private GameObject altitudeGOLabelSee;
+    private GameObject altitudeGOLabelGround;
+    private GameObject speedGOLabel;
+    private GameObject accelerationGOLabel;
 	
 
 
@@ -51,20 +62,44 @@ public class PlayerControler : MonoBehaviour {
         this.acc = Vector3d.zero;
 
 		this.localGravity = Vector3d.zero;
+		this.universe = FindObjectOfType<Universe>();
 	}
 
 	private void Start() {
+		if (this.spawnOnLaunchPad) {
+			this.useCustomPhysics = true;
+            this.rb.position = (Vector3) ((Planet) this.nearestBody).getLaunchPadPosition();
+		}
         this.pos = new Vector3d(this.rb.position);
+
+        // Setup altitude label
+        this.lastPlayerPlanetDistance = 0f;
+        this.altitudeGOLabelSee = GameObject.Find("AltitudeValueSee");
+        this.altitudeGOLabelGround = GameObject.Find("AltitudeValueGround");
+        this.speedGOLabel = GameObject.Find("SpeedValue");
+        this.accelerationGOLabel = GameObject.Find("AccelerationValue");
 	}
 	
 
 
 
 	private void Update() {
+		// Handle physics
 		if (this.useCustomPhysics)
 			this.handleCameraPhysicsMovement();
 		else
 			this.handleCameraFreeMovement();
+
+        // Update altitude
+		if (Time.fixedTime % 0.5f == 0) {
+            this.altitudeGOLabelSee.GetComponent<Text>().text = "Altitude niveau mer : " + (Mathf.Round(this.getAltitude(AltitudeMode.OCEAN_LEVEL) / 10f) / 100f).ToString() + " km";
+            this.altitudeGOLabelGround.GetComponent<Text>().text = "Altitude niveau sol : " + (Mathf.Round(this.getAltitude(AltitudeMode.TERRAIN_LEVEL) / 10f) / 100f).ToString() + " km";
+            this.speedGOLabel.GetComponent<Text>().text =
+                "Vitesse : " + Mathf.Round((float)this.vel.magnitude * 100f / 1000f) / 100f + " km/s (<i>"
+                + Mathf.Round((float)this.vel.magnitude * 100f / 1000f * 3600f) / 100f + " km/h</i>)";
+            this.accelerationGOLabel.GetComponent<Text>().text =
+                "Accélération : " + Mathf.Round((float)this.acc.magnitude * 100f) / 100f + " m/s²";
+		}
 	}
 
 	private void FixedUpdate() {
@@ -73,13 +108,16 @@ public class PlayerControler : MonoBehaviour {
 		this.vel += this.acc * Time.fixedDeltaTime;
         this.acc = Vector3d.zero;
 
+        // Update nearest body pointer
+        this.nearestBody = this.universe.nearestBodyFrom(this.pos);
+
         // Update physics model
         if (this.useCustomPhysics)
             this.updatePhysicsIntegrator();
 
 		// Update Rigidbody position
         this.rb.MovePosition((Vector3) this.pos);
-    }
+	}
 
 	private void OnCollisionEnter(Collision other) {
 		this.vel = Vector3d.zero;
@@ -93,12 +131,13 @@ public class PlayerControler : MonoBehaviour {
 
 	
 	private void updatePhysicsIntegrator() {
-		Planet mainPlanet = this.planet;
+		if (!this.universe.isInstanciated())
+			return;
 
 		// Gravity
-		double sqrtDistance = (mainPlanet.pos - this.pos).sqrMagnitude;
-		Vector3d forceGravDir = (mainPlanet.pos - this.pos).normalized;
-		this.localGravity = forceGravDir * Constants.gravitationalConstant * mainPlanet.mass * this.mass / sqrtDistance;
+		double sqrtDistance = (this.nearestBody.pos - this.pos).sqrMagnitude;
+		Vector3d forceGravDir = (this.nearestBody.pos - this.pos).normalized;
+		this.localGravity = forceGravDir * Constants.gravitationalConstant * this.nearestBody.mass * this.mass / sqrtDistance;
 
 		this.addForce(localGravity);
 
@@ -144,22 +183,38 @@ public class PlayerControler : MonoBehaviour {
 
 	private void addForce(Vector3d force) {
 		this.acc += force / this.mass;
-    } 
+    }
 
+	private float getAltitude(AltitudeMode mode) {
+		if (mode.Equals(AltitudeMode.OCEAN_LEVEL))
+			return (float) (Vector3d.Distance(this.pos, this.nearestBody.pos) - this.nearestBody.size / 2f) * 100f;
+
+		if (this.useCustomPhysics)
+            return this.lastPlayerPlanetDistance * 100f;
+		
+		Debug.LogWarning("Player doesn't use custom physics, so player to planet surface distance will not be calculated.");
+        return 0;
+	}
 
 	private bool isGrounded() {
         bool grounded = false;
-		Ray rayCollision = new Ray((Vector3) this.pos, this.collisionPointer.transform.forward);
+        Ray rayCollision = new Ray((Vector3)this.pos, this.collisionPointer.transform.forward);
         RaycastHit rayHitInfo;
 
-        if(Physics.Raycast(rayCollision, out rayHitInfo)) {
-			// Debug.Log("Hauteur : " + rayHitInfo.distance);
-			if (rayHitInfo.distance < this.maxPlayerGroundDistance)
+        if (Physics.Raycast(rayCollision, out rayHitInfo)) {
+            this.lastPlayerPlanetDistance = rayHitInfo.distance;
+            if (rayHitInfo.distance < this.maxPlayerGroundDistance)
                 grounded = true;
 
-            Debug.DrawLine((Vector3) this.pos, rayHitInfo.point, Color.green);
-		}
-		
-		return grounded;
+            Debug.DrawLine((Vector3)this.pos, rayHitInfo.point, Color.green);
+        }
+
+        return grounded;
     }
+}
+
+
+enum AltitudeMode {
+    OCEAN_LEVEL,
+    TERRAIN_LEVEL
 }

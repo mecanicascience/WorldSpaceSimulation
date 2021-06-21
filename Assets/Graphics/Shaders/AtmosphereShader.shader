@@ -94,7 +94,7 @@ Shader "Custom/AtmosphereShader" {
 
                 float2 hitInfo = raySphere(atmosphereCenter, _AtmosphereDiameter / 2, rayOrigin, rayDir);
                 float dstToAtmosphere = hitInfo.x;
-                float dstThroughAtmosphere = min(hitInfo.y, dstToAtmosphere - dstToAtmosphere);
+                float dstThroughAtmosphere = hitInfo.y; // min(hitInfo.y, dstToAtmosphere - dstToAtmosphere);
 
                 if (dstThroughAtmosphere == 0)
                     return originalCol;

@@ -5,13 +5,15 @@ using sys = System;
 
 public abstract class Body : MonoBehaviour {
 	private int bodyUUID = -1;
+    private Universe universe;
+
+    protected GameObject player = null;
 
     public Vector3d pos;
     public Vector3d vel;
 	
 
     [Header("Body Configuration")]
-    public GameObject player = null;
     public double mass = 88300;
     public Material surfaceMaterial;
 	public bool useCustomSeed = false;
@@ -19,17 +21,28 @@ public abstract class Body : MonoBehaviour {
 
 
     [HideInInspector]
+    public float size = 60000; // Diameter of the body
+
+    [HideInInspector]
     public Vector3d lastPos;
+
     [HideInInspector]
     public Vector3d lastPlayerPos;
+    
 
 
     protected void Start() {
-        // Initialize UUID
+        // Initialize UUID and find universe
 		this.generateUUID();
+        this.universe = FindObjectOfType<Universe>();
+        this.player = this.universe.getPlayer();
 
 		// Setup planet material
 		this.transform.GetComponent<MeshRenderer>().sharedMaterial = surfaceMaterial;
+
+        // Initialize body size
+        this.size = this.transform.localScale.x;
+        this.transform.localScale.Set(this.size, this.size, this.size);
 
 		// Setup planet position
         this.pos = new Vector3d(this.transform.position);
@@ -40,6 +53,10 @@ public abstract class Body : MonoBehaviour {
         // Stores player datas
         this.lastPos = this.pos;
         this.lastPlayerPos = this.player.GetComponent<PlayerControler>().pos;
+
+        // Updates body size
+        this.size = this.transform.localScale.x;
+        this.transform.localScale.Set(this.size, this.size, this.size);
 	}
 
 
@@ -67,5 +84,9 @@ public abstract class Body : MonoBehaviour {
         // Generate new UUID
         this.bodyUUID = Random.Range(0, int.MaxValue);
         return this.bodyUUID;
+    }
+
+    public void setPlayer(GameObject player) {
+        this.player = player;
     }
 }

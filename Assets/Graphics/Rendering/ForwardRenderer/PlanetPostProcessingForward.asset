@@ -74,6 +74,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_Active: 1
   settings:
-    isEnabled: 1
+    isEnabled: 0
     renderingPass: 1000
     featureMaterial: {fileID: 2100000, guid: 62db405e995bbb14281847e5055f1445, type: 2}

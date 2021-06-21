@@ -50,7 +50,7 @@ public class PlanetChunk {
         this.trianglesCollider.Clear();
 
         // Generate Chunks
-        this.mainChunk = new QuadTree.Chunk(this, null, new QuadTree.BoundingBox(0, 0, this.planet.planetSize / 2f), 0, localUp, 0b1);
+        this.mainChunk = new QuadTree.Chunk(this, null, new QuadTree.BoundingBox(0, 0, this.planet.size / 2f), 0, localUp, 0b1);
         this.mainChunk.subdivide();
         this.maxCurrentDepth = this.mainChunk.maxCurrentDepth;
 
